@@ -10,10 +10,12 @@ import { DynamoConnectorImp } from "../provider/aws/DynamoConnectorImp";
 
 const AppContainer: Container = new Container();
 AppContainer.applyCustomMetadataReader(new StaticPropsMetadataReader());
-AppContainer.bind<LocationMessageController>(CONTROLLERS.LocationMessageController).to(
-  LocationMessageControllerImp
+AppContainer.bind<LocationMessageController>(
+  CONTROLLERS.LocationMessageController
+).to(LocationMessageControllerImp);
+AppContainer.bind<LocationMessageService>(SERVICES.LocationMessageService).to(
+  LocationMessageServiceImp
 );
-AppContainer.bind<LocationMessageService>(SERVICES.LocationMessageService).to(LocationMessageServiceImp);
 AppContainer.bind<DynamoConnector>(ADAPTERS.DynamoConnector).to(
   DynamoConnectorImp
 );

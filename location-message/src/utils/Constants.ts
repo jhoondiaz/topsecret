@@ -1,11 +1,32 @@
 export const CODES = {
-  codeMutant: 200,
-  codeHuman: 403,
-  codeError: 404,
+  codeSuccess: 200,
+  codeError: 400,
 };
 
 export const VALIDATIONS = {
-  letters: ["T", "A", "C", "G"],
+  satellites: [
+    {
+      name: "kenobi",
+      position: {
+        x: -500,
+        y: -200,
+      },
+    },
+    {
+      name: "skywalker",
+      position: {
+        x: -100,
+        y: -100,
+      },
+    },
+    {
+      name: "sato",
+      position: {
+        x: 500,
+        y: 100,
+      },
+    },
+  ],
   sequence: 4,
 };
 

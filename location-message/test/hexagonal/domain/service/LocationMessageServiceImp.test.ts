@@ -3,7 +3,6 @@ import { DynamoConnectorImp } from "../../../../src/hexagonal/infrastructure/pro
 
 const provider = new DynamoConnectorImp();
 
-
 describe("Test service", () => {
   jest.restoreAllMocks();
   jest

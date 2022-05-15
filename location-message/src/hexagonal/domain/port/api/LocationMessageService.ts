@@ -1,3 +1,3 @@
 export interface LocationMessageService {
-  postLocationMessage(data: Array<string>): Promise<any>;
+  postLocationMessage(satellites: Array<any>): Promise<any>;
 }

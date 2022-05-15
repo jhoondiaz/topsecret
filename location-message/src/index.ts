@@ -36,7 +36,7 @@ const mapInput = async (event) => {
   const eventFinal = {
     path: event.path,
     httpMethod: event.httpMethod,
-    dna: body ? body.dna : null,
+    satellites: body ? body.satellites : null,
   };
   return eventFinal;
 };

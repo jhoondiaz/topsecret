@@ -10,15 +10,14 @@ export class LocationMessageServiceImp implements LocationMessageService {
   public static readonly propertyInjections = [];
 
   public _dynamoConnector: DynamoConnector;
-  private dnaFinal: Array<Array<string>> = [];
-  private posSelected: Array<any> = [];
 
   constructor(dynamoConnector: DynamoConnector) {
     this._dynamoConnector = dynamoConnector;
   }
 
-  async postLocationMessage(dna: Array<string>): Promise<any> {
+  async postLocationMessage(satellites: Array<any>): Promise<any> {
     try {
+      /*
       const optionsGet = {
         TableName: process.env.DYNAMO_TABLE,
         IndexName: "adn-index",
@@ -38,20 +37,21 @@ export class LocationMessageServiceImp implements LocationMessageService {
           `El dna provisionado ya fue procesado, resultado: ${item.Items[0].type}`
         );
       }
+      */
 
-      this.dnaFinal = [];
-
-      if (!this.validation(dna)) {
-        throw new Error("El dna provisionado no es correcto");
+      if (!this.validation(satellites)) {
+        throw new Error("Los datos provisionados no son correctos");
       }
 
       const timestamp = moment(new Date())
         .tz("America/Bogota")
         .format("YYYYMMDDHHmmssms");
 
-      console.log(this.dnaFinal);
+      const arrays = await this.orderLocationMessages(satellites);
+      const position = await this.getLocation(arrays.distances);
+      const message = await this.getLocation(arrays.messages);
 
-      const type = await this.isMutant(this.dnaFinal);
+      /*
       const description = type ? "Mutant" : "Human";
       const options = {
         TableName: process.env.DYNAMO_TABLE,
@@ -64,11 +64,17 @@ export class LocationMessageServiceImp implements LocationMessageService {
       };
 
       await this._dynamoConnector.putItem(options);
+      */
+
+      const responseBody = {
+        position: position,
+        message: message,
+      };
 
       const response = {
-        statusCode: type ? CODES.codeMutant : CODES.codeHuman,
+        statusCode: CODES.codeSuccess,
         headers: HEADERS,
-        body: description,
+        body: responseBody,
         isBase64Encoded: false,
       };
 
@@ -79,27 +85,47 @@ export class LocationMessageServiceImp implements LocationMessageService {
     }
   }
 
-  validation = (dna: Array<string>): boolean => {
-    const dnalength: number = dna.length;
-    const letters: Array<string> = VALIDATIONS.letters;
+  async orderLocationMessages(satellites: Array<any>): Promise<any> {
+    const distances = [];
+    const messages = [];
 
-    if (dnalength < VALIDATIONS.sequence) {
+    for (const satellite of satellites) {
+      distances.push(satellite.distance);
+      messages.push(satellite.message);
+    }
+    return { distances: distances, messages: messages };
+  }
+
+  async getLocation(distances: Array<number>): Promise<any> {
+    const position = {
+      x: 0,
+      y: 0,
+    };
+    return position;
+  }
+
+  async getMessage(messages: Array<any>): Promise<string> {
+    const message = "este es el mensaje";
+    return message;
+  }
+
+  validation = (satellites: Array<any>): boolean => {
+    const dnalength: number = satellites.length;
+
+    if (dnalength != 3) {
       return false;
     }
 
-    for (let i = 0; i < dna.length; i++) {
-      const element: Array<string> = dna[i].split("");
-      if (element.length != dnalength) {
+    for (const satellite of satellites) {
+      const validateName = VALIDATIONS.satellites.find(
+        (data) => data.name == satellite.name
+      );
+
+      if (!validateName) {
         return false;
       }
-      for (let j = 0; j < element.length; j++) {
-        const element2: string = element[j];
-        if (!letters.includes(element2)) {
-          return false;
-        }
-      }
-      this.dnaFinal.push(element);
     }
+
     return true;
   };
 }

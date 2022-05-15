@@ -13,16 +13,16 @@ export class LocationMessageControllerImp implements LocationMessageController {
 
   public async maindistributor(event: any): Promise<any> {
     try {
-      return await this.postLocationMessage(event.dna);
+      return await this.postLocationMessage(event.satellites);
     } catch (error) {
       console.log(`Controller - General Error: ${error.message}`, error);
       throw error;
     }
   }
 
-  public async postLocationMessage(dna: Array<string>): Promise<any> {
+  public async postLocationMessage(satellites: Array<any>): Promise<any> {
     try {
-      return await this._locationMessage.postLocationMessage(dna);
+      return await this._locationMessage.postLocationMessage(satellites);
     } catch (error) {
       console.log(`Controller - General Error: ${error.message}`, error);
       throw error;
