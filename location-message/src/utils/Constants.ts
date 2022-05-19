@@ -3,6 +3,11 @@ export const CODES = {
   codeError: 400,
 };
 
+export const MESSAGES = {
+  messageNotPosition:
+    "No fue posible determinar la posicion con las distancias ingresadas",
+};
+
 export const VALIDATIONS = {
   satellites: [
     {
@@ -15,7 +20,7 @@ export const VALIDATIONS = {
     {
       name: "skywalker",
       position: {
-        x: -100,
+        x: 100,
         y: -100,
       },
     },
@@ -27,11 +32,13 @@ export const VALIDATIONS = {
       },
     },
   ],
-  sequence: 4,
+  desface: 0.1,
 };
 
 export const HEADERS = {
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Headers":
+    "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
+  "x-amzn-ErrorType": "",
 };

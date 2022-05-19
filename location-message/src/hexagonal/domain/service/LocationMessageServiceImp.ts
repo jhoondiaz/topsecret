@@ -1,9 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LocationMessageService } from "../port/api/LocationMessageService";
 import { DynamoConnector } from "../port/spi/DynamoConnector";
-import { v4 as uuidv4 } from "uuid";
 import * as moment from "moment-timezone";
-import { CODES, HEADERS, VALIDATIONS } from "../../../utils/Constants";
+import {
+  CODES,
+  HEADERS,
+  MESSAGES,
+  VALIDATIONS,
+} from "../../../utils/Constants";
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const solveQuadraticEquation = require("solve-quadratic-equation");
 
 export class LocationMessageServiceImp implements LocationMessageService {
   public static readonly constructorInjections = ["DynamoConnector"];
@@ -17,54 +24,15 @@ export class LocationMessageServiceImp implements LocationMessageService {
 
   async postLocationMessage(satellites: Array<any>): Promise<any> {
     try {
-      /*
-      const optionsGet = {
-        TableName: process.env.DYNAMO_TABLE,
-        IndexName: "adn-index",
-        KeyConditionExpression: "#sts = :sts",
-        ExpressionAttributeNames: {
-          "#sts": "adn",
-        },
-        ExpressionAttributeValues: {
-          ":sts": JSON.stringify(dna),
-        },
-      };
-
-      const item = await this._dynamoConnector.getInfoTable(optionsGet);
-
-      if (item.Count > 0) {
-        throw new Error(
-          `El dna provisionado ya fue procesado, resultado: ${item.Items[0].type}`
-        );
-      }
-      */
+      console.log("satellites, ", satellites);
 
       if (!this.validation(satellites)) {
         throw new Error("Los datos provisionados no son correctos");
       }
 
-      const timestamp = moment(new Date())
-        .tz("America/Bogota")
-        .format("YYYYMMDDHHmmssms");
-
       const arrays = await this.orderLocationMessages(satellites);
       const position = await this.getLocation(arrays.distances);
-      const message = await this.getLocation(arrays.messages);
-
-      /*
-      const description = type ? "Mutant" : "Human";
-      const options = {
-        TableName: process.env.DYNAMO_TABLE,
-        Item: {
-          id: uuidv4(),
-          timestamp: Number(timestamp),
-          type: description,
-          adn: JSON.stringify(dna),
-        },
-      };
-
-      await this._dynamoConnector.putItem(options);
-      */
+      const message = await this.getMessage(arrays.messages);
 
       const responseBody = {
         position: position,
@@ -74,7 +42,7 @@ export class LocationMessageServiceImp implements LocationMessageService {
       const response = {
         statusCode: CODES.codeSuccess,
         headers: HEADERS,
-        body: responseBody,
+        body: JSON.stringify(responseBody),
         isBase64Encoded: false,
       };
 
@@ -83,6 +51,28 @@ export class LocationMessageServiceImp implements LocationMessageService {
       console.log(`General Error ${error.message}`, error);
       throw error;
     }
+  }
+
+  async postDistances(position: any): Promise<any> {
+    const distances = [];
+
+    for (const satellite of VALIDATIONS.satellites) {
+      const distance = Math.sqrt(
+        Math.pow(satellite.position.x - position.x, 2) +
+          Math.pow(satellite.position.y - position.y, 2)
+      );
+      console.log("distance: ", distance);
+      distances.push({ name: satellite.name, distance: this.round(distance) });
+    }
+
+    const response = {
+      statusCode: CODES.codeSuccess,
+      headers: HEADERS,
+      body: JSON.stringify(distances),
+      isBase64Encoded: false,
+    };
+
+    return response;
   }
 
   async orderLocationMessages(satellites: Array<any>): Promise<any> {
@@ -97,16 +87,75 @@ export class LocationMessageServiceImp implements LocationMessageService {
   }
 
   async getLocation(distances: Array<number>): Promise<any> {
-    const position = {
-      x: 0,
-      y: 0,
-    };
-    return position;
+    console.log("distances method", distances);
+
+    const N: number = this.round(
+      -1350 - (Math.pow(distances[1], 2) - Math.pow(distances[0], 2)) / 200);
+    console.log("value N: ", N);
+
+    const a = 37;
+    const b: number = this.round(-12 * N - 1400);
+    const c: number =
+    this.round(Math.pow(N, 2) + 400 * N + 290000 - Math.pow(distances[0], 2));
+
+    console.log("value abc: ", a, b, c);
+    const valuesx = solveQuadraticEquation(a, b, c);
+    console.log("valuesx: ", valuesx);
+
+    const positions = [];
+    const sattellite3 = VALIDATIONS.satellites[2].position;
+    const desface = VALIDATIONS.desface;
+    for (const valx of valuesx) {
+      const x: number = this.round(valx);
+      const y: number = this.round(-6 * x + N);
+      const distance3 = this.round(Math.sqrt(
+        Math.pow(sattellite3.x - x, 2) + Math.pow(sattellite3.y - y, 2)
+      ));
+
+      console.log("position: x,y", x, y);
+      const evaluateDistance1 = distance3 + desface;
+      const evaluateDistance2 = distance3 - desface;
+      console.log("evaluateDistance: ", evaluateDistance1, evaluateDistance2, distances[2]);
+      if (evaluateDistance1 >= distances[2] && distances[2] >= evaluateDistance2) {
+        positions.push({
+          x: this.round(x),
+          y: this.round(y),
+        });
+      }
+    }
+
+    const response =
+      positions.length == 0 ? MESSAGES.messageNotPosition : positions;
+
+    return response;
   }
 
   async getMessage(messages: Array<any>): Promise<string> {
-    const message = "este es el mensaje";
-    return message;
+    const message = [];
+    let condition = 0;
+    let cont = 0;
+
+    do {
+      for (const iterator of messages) {
+        if (iterator[cont] != "" && iterator[cont] != undefined) {
+          const messageSize = message.length;
+          if (
+            (iterator[cont] != message[messageSize - 1] &&
+              message[messageSize - 1] != undefined) ||
+            messageSize == 0
+          ) {
+            message.push(iterator[cont]);
+          }
+        }
+
+        if (iterator.length == cont) {
+          condition++;
+        }
+      }
+
+      cont++;
+    } while (condition != messages.length);
+    return message.join(" ");
   }
 
   validation = (satellites: Array<any>): boolean => {
@@ -127,5 +176,10 @@ export class LocationMessageServiceImp implements LocationMessageService {
     }
 
     return true;
-  };
+  }
+
+  round = (value: number): number => {
+    const multiplier = Math.pow(10, 1);
+    return Math.round(value * multiplier) / multiplier;
+  }
 }

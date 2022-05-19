@@ -9,6 +9,7 @@ let controller: LocationMessageController;
 
 export const handler = async (event: any): Promise<any> => {
   try {
+    console.log("event: ", event);
     event = await mapInput(event);
 
     controller = AppContainer.get<LocationMessageController>(
@@ -37,6 +38,7 @@ const mapInput = async (event) => {
     path: event.path,
     httpMethod: event.httpMethod,
     satellites: body ? body.satellites : null,
+    position: body ? body.position : null,
   };
   return eventFinal;
 };
