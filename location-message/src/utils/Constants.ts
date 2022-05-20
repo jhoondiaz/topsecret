@@ -1,6 +1,6 @@
 export const CODES = {
   codeSuccess: 200,
-  codeError: 400,
+  codeError: 404,
 };
 
 export const MESSAGES = {

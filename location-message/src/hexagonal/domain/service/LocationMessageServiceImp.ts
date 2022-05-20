@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LocationMessageService } from "../port/api/LocationMessageService";
-import { DynamoConnector } from "../port/spi/DynamoConnector";
-import * as moment from "moment-timezone";
 import {
   CODES,
   HEADERS,
@@ -13,14 +11,8 @@ import {
 const solveQuadraticEquation = require("solve-quadratic-equation");
 
 export class LocationMessageServiceImp implements LocationMessageService {
-  public static readonly constructorInjections = ["DynamoConnector"];
+  public static readonly constructorInjections = [];
   public static readonly propertyInjections = [];
-
-  public _dynamoConnector: DynamoConnector;
-
-  constructor(dynamoConnector: DynamoConnector) {
-    this._dynamoConnector = dynamoConnector;
-  }
 
   async postLocationMessage(satellites: Array<any>): Promise<any> {
     try {
@@ -39,8 +31,11 @@ export class LocationMessageServiceImp implements LocationMessageService {
         message: message,
       };
 
+      const code =
+        typeof position == "string" ? CODES.codeError : CODES.codeSuccess;
+
       const response = {
-        statusCode: CODES.codeSuccess,
+        statusCode: code,
         headers: HEADERS,
         body: JSON.stringify(responseBody),
         isBase64Encoded: false,
@@ -90,13 +85,15 @@ export class LocationMessageServiceImp implements LocationMessageService {
     console.log("distances method", distances);
 
     const N: number = this.round(
-      -1350 - (Math.pow(distances[1], 2) - Math.pow(distances[0], 2)) / 200);
+      -1350 - (Math.pow(distances[1], 2) - Math.pow(distances[0], 2)) / 200
+    );
     console.log("value N: ", N);
 
     const a = 37;
     const b: number = this.round(-12 * N - 1400);
-    const c: number =
-    this.round(Math.pow(N, 2) + 400 * N + 290000 - Math.pow(distances[0], 2));
+    const c: number = this.round(
+      Math.pow(N, 2) + 400 * N + 290000 - Math.pow(distances[0], 2)
+    );
 
     console.log("value abc: ", a, b, c);
     const valuesx = solveQuadraticEquation(a, b, c);
@@ -108,15 +105,25 @@ export class LocationMessageServiceImp implements LocationMessageService {
     for (const valx of valuesx) {
       const x: number = this.round(valx);
       const y: number = this.round(-6 * x + N);
-      const distance3 = this.round(Math.sqrt(
-        Math.pow(sattellite3.x - x, 2) + Math.pow(sattellite3.y - y, 2)
-      ));
+      const distance3 = this.round(
+        Math.sqrt(
+          Math.pow(sattellite3.x - x, 2) + Math.pow(sattellite3.y - y, 2)
+        )
+      );
 
       console.log("position: x,y", x, y);
       const evaluateDistance1 = distance3 + desface;
       const evaluateDistance2 = distance3 - desface;
-      console.log("evaluateDistance: ", evaluateDistance1, evaluateDistance2, distances[2]);
-      if (evaluateDistance1 >= distances[2] && distances[2] >= evaluateDistance2) {
+      console.log(
+        "evaluateDistance: ",
+        evaluateDistance1,
+        evaluateDistance2,
+        distances[2]
+      );
+      if (
+        evaluateDistance1 >= distances[2] &&
+        distances[2] >= evaluateDistance2
+      ) {
         positions.push({
           x: this.round(x),
           y: this.round(y),
@@ -176,10 +183,10 @@ export class LocationMessageServiceImp implements LocationMessageService {
     }
 
     return true;
-  }
+  };
 
   round = (value: number): number => {
     const multiplier = Math.pow(10, 1);
     return Math.round(value * multiplier) / multiplier;
-  }
+  };
 }
