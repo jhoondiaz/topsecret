@@ -20,7 +20,8 @@
         "customScript": "echo 'Developed'"
     },
     "subPackages": [
-        "location-message"
+        "location-message",
+        "location-message-split"
     ],
     "devDependencies": {
         "subpackage": "^1.1.0"
