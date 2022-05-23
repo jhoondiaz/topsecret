@@ -77,7 +77,7 @@ to use the service that processes satellites array:
 ## Installation
 
 * `git clone git@github.com:jhoondiaz/topsecret.git` this repository
-* change into the new directory `cd test-mutant`
+* change into the new directory `cd topsecret`
 
 ## Dependencies
 
